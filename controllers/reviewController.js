@@ -1,8 +1,7 @@
 const catchAsync = require("../utils/catchAsync")
 const Review = require("../models/reviewModel")
-const AppError = require('../utils/appError')
-const factory = require('../controllers/handlerFactory')
-
+const AppError = require("../utils/appError")
+const factory = require("../controllers/handlerFactory")
 
 // & getting all reviews
 exports.getAllReviews = factory.getAll(Review)
@@ -24,32 +23,35 @@ exports.getAllReviews = factory.getAll(Review)
 //    })
 // })
 
-
 // & creating a review
 exports.createReview = catchAsync(async (req, res, next) => {
+  // ! TELLING the controller that it should use this room id (('/:roomId/reviews')) and the logged-in user's id:
 
-   // ! TELLING the controller that it should use this tour id (('/:roomId/reviews')) and the logged in user's id:
+  if (!req.body.room) req.body.room = req.params.roomId // * if we did not specify the room id in the body we wanna define that as the one coming from the URL
+  if (!req.body.tour) req.body.tour = req.params.tourId
+  if (!req.body.user) req.body.user = req.user.id // * from the checkedLoggedIn middleware
 
-   if (!req.body.room) req.body.room = req.params.roomId  // * if we did not specify the room id in the body we wanna define that as the one coming from the url
-
-   if (!req.body.tour) req.body.tour = req.params.tourId
-
-   if (!req.body.user) req.body.user = req.user.id // * from the checkedLoggedIn middleware
-
-   const review = await Review.create(req.body)
-
-   res.status(201).json({
-      status: 'success',
+  try {
+    const review = await Review.create(req.body)
+    res.status(201).json({
+      status: "success",
       data: {
-         review: review
-      }
-   })
+        review: review,
+      },
+    })
+  } catch (error) {
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.user) {
+      return next(new AppError("You cannot add multiple reviews", 400))
+    } else {
+      return next(
+        new AppError("An error occurred while submitting your review.", 500)
+      )
+    }
+  }
 })
-
 
 // & updating a review
 exports.getReview = factory.getOne(Review)
-
 
 // & updating a review
 exports.updateReview = factory.updateOne(Review)
@@ -71,7 +73,6 @@ exports.updateReview = factory.updateOne(Review)
 //       }
 //    })
 // })
-
 
 // & deleting a review
 exports.deleteReview = factory.deleteOne(Review)

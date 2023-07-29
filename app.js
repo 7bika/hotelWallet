@@ -17,8 +17,15 @@ const cookieParser = require("cookie-parser")
 dotenv.config({ path: "./config.env" }) // * where our config environment is
 // console.log(process.env)
 
-// & using express:
+// & start using express:
 const app = express()
+
+app.use(
+  cors({
+    credentials: true,
+    origin: true,
+  })
+) // * cross Origin Resource Sharing // enabling sharing api
 
 // & getting access to the cookie from the browser cookie-parser
 app.use(cookieParser())
@@ -32,7 +39,8 @@ app.use(express.urlencoded({ extended: true }))
 // & using pug engine : html template for express
 app.set("view engine", "pug")
 app.set("views", path.join(__dirname, "views")) //will join the directory name and the views
-app.use(express.static(path.join(__dirname, "public"))) // reading static files
+app.use(express.static(path.join(__dirname, "public")))
+app.use("/public", express.static(path.join(__dirname, "/public"))) // reading static files
 
 // & middlewares:
 // app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }))
@@ -58,14 +66,6 @@ app.use((req, res, next) => {
 
 app.options("*", cors())
 
-app.use(
-  cors({
-    credentials: true,
-    origin: "http://localhost:3000",
-    optionsSuccessStatus: 200,
-  })
-) // * cross Origin Resource Sharing // enabling sharing api
-
 app.use(express.static(` $ {__dirname}/public `)) // * reading static files
 
 //* handling axios requests
@@ -81,7 +81,7 @@ app.use(function (req, res, next) {
 const limiter = rateLimit({
   // ! how many requests per ip we're going to allow
   windowMs: 60 * 60 * 1000, // 1 hour //time window 100 request per 1 hour
-  max: 100,
+  max: 150,
   message: "Too many requests from this IP, please try again in an hour",
 })
 
@@ -111,7 +111,7 @@ app.use(
 
 // & a simple middleware to output hello from the backend:
 app.use((req, res, next) => {
-  console.log("Hello from the backend 😊  ")
+  console.log("Hello from the backend 😊")
   next()
 })
 
@@ -121,7 +121,7 @@ app.use((req, res, next) => {
   console.log(requestTime)
   console.log(req.headers)
   console.log("cookie")
-  console.log(req.cookies.jwt)
+  console.log(req.cookies)
   console.log("headers.cookie")
   console.log(req.headers.cookie)
   next()
@@ -132,6 +132,7 @@ const userRoutes = require("./routes/userRoutes")
 const roomRoutes = require("./routes/roomRoutes")
 const reviewRoutes = require("./routes/reviewRoutes")
 const tourRoutes = require("./routes/tourRoutes")
+const productRoutes = require("./routes/productRoutes")
 const viewRoutes = require("./routes/viewRoutes")
 const bookingRoutes = require("./routes/bookingRoutes")
 
@@ -151,14 +152,17 @@ app.use("/api/users", userRoutes) // * using the userRouter on '/api/users'
 // const roomRouter = express.Router() // * creating the rooms router
 app.use("/api/rooms", roomRoutes) // * using the roomRouter on 'api/rooms'
 
+// const tourRouter = express.Router()  // * creating the tour router
+app.use("/api/tours", tourRoutes) // * using the reviewRouter on 'api/tour'
+
 // const roomRouter = express.Router() // * creating the reviews router
 app.use("/api/reviews", reviewRoutes) // * using the reviewRouter on 'api/reviews'
 
 // const tourRouter = express.Router()  // * creating the tour router
-app.use("/api/tours", tourRoutes) // * using the reviewRouter on 'api/reviews'
+app.use("/api/products", productRoutes) // * using the reviewRouter on 'api/products'
 
-// const tourRouter = express.Router()  // * creating the tour router
-app.use("/api/bookings", bookingRoutes) // * using the reviewRouter on 'api/reviews'
+// const tourRouter = express.Router()  // * creating the booking router
+app.use("/api/bookings", bookingRoutes) // * using the reviewRouter on 'api/bookings'
 
 // userRouter.route('/api/users').get((req, res) => {
 //    res.json({

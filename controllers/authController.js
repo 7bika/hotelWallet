@@ -6,10 +6,9 @@ const User = require("../models/userModel")
 const catchAsync = require("../utils/catchAsync")
 const AppError = require("../utils/appError")
 const sendEmail = require("../utils/email")
-const { token } = require("morgan")
+// const { token } = require("morgan")
 const crypto = require("crypto")
-const Email = require("../utils/email")
-
+// const Email = require("../utils/email")
 
 // ^ signing the token:
 const signToken = (id) => {
@@ -92,11 +91,11 @@ exports.signup = catchAsync(async (req, res, next) => {
   //    }
   // })
 
-  const url = `${req.protocol}://${req.get('host')}/me`
-  console.log(url)
+  const url = `${req.protocol}://${req.get("host")}/me`
+  console.log("url", url)
 
   //& sending email(welcoming email)
-  await new Email(newUser, url).sendWelcomeEmail()
+  // await new Email(newUser, url).sendWelcomeEmail()
 
   createSendToken(newUser, 201, res)
 })
@@ -150,7 +149,6 @@ exports.login = catchAsync(async (req, res, next) => {
 })
 
 exports.logout = catchAsync(async (req, res, next) => {
-  
   // ! 1 sending a cookie with the token that expires immediately
   res.cookie("jwt", "logged Out", {
     // * same name as the jwt from before
@@ -307,26 +305,25 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // * http://localhost:3000/api/users/resetPassword/:token
   // * protocol : http or https //original token
 
-  // const resetURL = ` ${req.protocol}://${req.get(
-  //   "host"
-  // )}/api/users/resetPassword/${resetToken}  `
+  const resetURL = ` ${req.protocol}://${req.get(
+    "host"
+  )}/api/users/resetPassword/${resetToken}  `
 
   const message = `forgot your password ? submit a patch request with your new password and passwordConfirm to : ${resetURL}.\nIf you did not forget your password , please ignore this email !`
 
   try {
-
     const resetURL = ` ${req.protocol}://${req.get(
       "host"
     )}/api/users/resetPassword/${resetToken}`
 
-    // await sendEmail({
-    //   email: req.body.email,
-    //   subject: "your password reset token (valid for 15 minutes)",
-    //   message: message,
-    // })
+    await sendEmail({
+      email: req.body.email,
+      subject: "your password reset token (valid for 15 minutes)",
+      message: message,
+    })
 
     // & with new mail
-    await new Email(user, resetURL).sendPasswordReset()
+    // await new Email(user, resetURL).sendPasswordReset()
 
     res.status(200).json({
       status: "success",

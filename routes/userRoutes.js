@@ -73,7 +73,7 @@ router.delete(
 // * will run after checking if the user is logged in and deactivate his account
 
 // & get all users and create a new user routes : only available by admin
-router.use(authController.checkLoggedIn, authController.restrictTo("admin")) // * check all the routes after this point and give access only to admin // * only restricted to admin
+// router.use(authController.checkLoggedIn, authController.restrictTo("admin")) // * check all the routes after this point and give access only to admin // * only restricted to admin
 
 router
   .route("/")
