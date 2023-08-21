@@ -160,7 +160,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 // & 4 : create a password reset token
 userSchema.methods.createPasswordResetToken = function () {
   // ! this token is what we're gonna send to the user it is like a reset password that the user can then use to create a real new password
-  const resetToken = crypto.randomBytes(32).toString("hex")
+  const resetToken = crypto.randomBytes(8).toString("hex")
   //number of characters //hexadecimal
 
   //* encrypting the token
@@ -173,7 +173,7 @@ userSchema.methods.createPasswordResetToken = function () {
   //    resetToken: '19522762c3decb82a48fe8007edea133c6e9da286f532c9fb0641782a012e4b6'
   //  } a30c05bc90faf65809c9d03b6b2311fe60257e27fe65550d7ed6c6ae10779e02  // ^this should be in the database
 
-  this.passwordResetExpires = Date.now() + 15 * 60 * 1000 // for 15 minutes
+  this.passwordResetExpires = Date.now() + 20 * 60 * 1000 // for 20 minutes
 
   //* saving this reset token by creating a new field in our database schema:
   // passwordResetToken: String,

@@ -4,6 +4,7 @@ const Tour = require("../models/tourModel")
 const Booking = require("../models/bookingModel")
 const catchAsync = require("../utils/catchAsync")
 const factory = require("./handlerFactory")
+const AppError = require("../utils/appError")
 
 exports.getTourCheckoutSession = catchAsync(async (req, res, next) => {
   // * 1) Get the currently booked tour
@@ -15,9 +16,7 @@ exports.getTourCheckoutSession = catchAsync(async (req, res, next) => {
     payment_method_types: ["card"],
 
     // * the cancel url : once the purchase is done :
-    success_url: `${req.protocol}://${req.get("host")}/my-tours/?tour=${
-      req.params.tourId
-    }&user=${req.user.id}&price=${tour.price}`,
+    success_url: `${req.protocol}://${req.get("host")}/api/tours`,
 
     // * the cancel url : once the purchase is done :
     cancel_url: `${req.protocol}://${req.get("host")}/tour/${tour.slug}`,
@@ -37,7 +36,11 @@ exports.getTourCheckoutSession = catchAsync(async (req, res, next) => {
           product_data: {
             name: tour.slug,
             description: tour.summary,
-            images: [`https://example.com/${tour.image}`],
+            images: [
+              `${req.protocol}://${req.get("host")}/public/img/tours/${
+                tour.imageCover
+              }`,
+            ],
           },
           unit_amount: tour.price,
         },
@@ -64,15 +67,13 @@ exports.getRoomCheckoutSession = catchAsync(async (req, res, next) => {
     })
   }
 
-  // * Create checkout session 
+  // * Create checkout session
   const session = await stripe.checkout.sessions.create({
     // Information about the session itself
     payment_method_types: ["card"],
 
-    // * the cancel url : once the purchase is done :
-    success_url: `${req.protocol}://${req.get("host")}/my-rooms/?room=${
-      req.params.roomId
-    }&user=${req.user.id}&price=${room.price}`,
+    // * the success url : once the purchase is done :
+    success_url: `${req.protocol}://${req.get("host")}/api/rooms`,
 
     // * the cancel url :
     cancel_url: `${req.protocol}://${req.get("host")}/room/${room.slug}`,
@@ -91,7 +92,11 @@ exports.getRoomCheckoutSession = catchAsync(async (req, res, next) => {
           product_data: {
             name: room.slug,
             description: room.summary,
-            images: [`https://example.com/${room.image}`],
+            images: [
+              `${req.protocol}://${req.get("host")}/room/${room.id}/${
+                room.imageCover
+              }`,
+            ],
           },
           unit_amount: room.price,
         },
@@ -107,14 +112,13 @@ exports.getRoomCheckoutSession = catchAsync(async (req, res, next) => {
   })
 })
 
-
 // *  booking in the bd
 exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
   // This is only TEMPORARY, because it's UNSECURE: everyone can make bookings without paying
   const { tour, user, price } = req.query
   // * we only want to create a booking only if these fields are specified
 
-  if ((!tour && !user && !price)) return next()
+  if (!tour && !user && !price) return next()
 
   await Booking.create({ tour, user, price })
 
@@ -123,7 +127,7 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
 
 exports.createRoomBookingCheckout = catchAsync(async (req, res, next) => {
   // This is only TEMPORARY, because it's UNSECURE: everyone can make bookings without paying
-  const { tour, room, user, price } = req.query
+  const { room, user, price } = req.body
   // * we only want to create a booking only if these fields are specified
 
   if (!user && !price && !room) return next()
@@ -132,7 +136,6 @@ exports.createRoomBookingCheckout = catchAsync(async (req, res, next) => {
 
   res.redirect(req.originalUrl.split("?")[0])
 })
-
 
 // * crud for the bookings
 exports.createBooking = factory.createOne(Booking)

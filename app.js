@@ -66,7 +66,7 @@ app.use((req, res, next) => {
 
 app.options("*", cors())
 
-app.use(express.static(` $ {__dirname}/public `)) // * reading static files
+// app.use(express.static(` ${__dirname}/public `)) // * reading static files
 
 //* handling axios requests
 app.use(function (req, res, next) {
@@ -142,6 +142,17 @@ const bookingRoutes = require("./routes/bookingRoutes")
 //       message: 'hello world',
 //    })
 // })
+
+if (process.env.NODE_ENV === "development") {
+  console.log("Running in development environment")
+  // Other development-specific actions
+} else if (process.env.NODE_ENV === "production") {
+  console.log("Running in production environment")
+  // Other production-specific actions
+} else {
+  console.log("Running in another environment")
+  // Other actions for different environments
+}
 
 // const router = express.Router()
 app.use("/", viewRoutes) // * whenever a url looks like this '/' it will go straight to viewRoutes

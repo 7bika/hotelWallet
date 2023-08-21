@@ -8,7 +8,7 @@ const AppError = require("../utils/appError")
 const sendEmail = require("../utils/email")
 // const { token } = require("morgan")
 const crypto = require("crypto")
-// const Email = require("../utils/email")
+const Email = require("../utils/email")
 
 // ^ signing the token:
 const signToken = (id) => {
@@ -95,7 +95,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   console.log("url", url)
 
   //& sending email(welcoming email)
-  // await new Email(newUser, url).sendWelcomeEmail()
+  await new Email(newUser, url).sendWelcome()
 
   createSendToken(newUser, 201, res)
 })
@@ -255,6 +255,7 @@ exports.checkLoggedIn = catchAsync(async (req, res, next) => {
   // ! 5 grant access to protected route :
 
   req.user = currentUser // * so that we can use it in the next middleware function with req.user
+  res.locals.user = currentUser
 
   next()
 })
@@ -286,6 +287,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // ! 1 get user based on posted email:
 
   const user = await User.findOne({ email: req.body.email })
+
   if (!user) {
     return next(new AppError("there is no user with that email address", 404))
   }
@@ -298,36 +300,32 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // ! we need to use .save() because we only did modify the document with createPasswordResetToken() and did not save the document afterwards and also because for everything related to password and to the user we always use save because we want to run all the validator and the save middleware functions
 
   await user.save({ validateBeforeSave: false }) //! deactivate all the validators that we specified in our schema because we did not post all the required fields from the schema in the req.body when we hit that route of forgetPassword
-  console.log(resetToken, user)
+  console.log("reset token", resetToken, user)
 
   // ! 3 send the token back in an email:
   // * reset url :
   // * http://localhost:3000/api/users/resetPassword/:token
   // * protocol : http or https //original token
 
-  const resetURL = ` ${req.protocol}://${req.get(
-    "host"
-  )}/api/users/resetPassword/${resetToken}  `
-
-  const message = `forgot your password ? submit a patch request with your new password and passwordConfirm to : ${resetURL}.\nIf you did not forget your password , please ignore this email !`
+  // const message = `forgot your password ? submit a patch request with your new password and passwordConfirm to : ${resetURL}.\nIf you did not forget your password , please ignore this email !`
 
   try {
     const resetURL = ` ${req.protocol}://${req.get(
       "host"
     )}/api/users/resetPassword/${resetToken}`
 
-    await sendEmail({
-      email: req.body.email,
-      subject: "your password reset token (valid for 15 minutes)",
-      message: message,
-    })
+    // await sendEmail({
+    //   email: req.body.email,
+    //   subject: "your password reset token (valid for 15 minutes)",
+    //   message: message,
+    // })
 
     // & with new mail
-    // await new Email(user, resetURL).sendPasswordReset()
+    await new Email(user, resetURL).sendPasswordReset()
 
     res.status(200).json({
       status: "success",
-      message: "token sent to email",
+      message: "Token Sent To Email",
     })
   } catch (err) {
     // * resetting the passwordResetToken and the passwordResetExpires so we can send again
@@ -361,6 +359,13 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("token is invalid or has expired", 400))
   }
+
+  // Check if provided reset Token matches the one sent in the email
+  // if (user.passwordResetToken !== req.body.resetToken) {
+  //   return next(
+  //     new AppError("Invalid token. Please enter the correct code.", 400)
+  //   )
+  // }
 
   //? updating the password and the passwordConfirm :
   user.password = req.body.password // * this user.password field = sending the password via the req.body

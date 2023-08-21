@@ -6,7 +6,6 @@ const router = express.Router()
 
 router.use(authController.checkLoggedIn)
 
-// router.get("/checkout-session/:id", bookingController.getCheckoutSession)
 router.get(
   "/checkout-session/tour/:tourId",
   bookingController.getTourCheckoutSession
